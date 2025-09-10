@@ -42,9 +42,9 @@ while moreData:
 #         print(f"Event title: '{title}'; # of registrants: {numRegistrants}; {eventStatus} {hiddenAlert}")  
          eventInfo.append((title, numRegistrants, eventStatus, hiddenAlert))
 
-   if int(data['page']) >= int(data['total_pages']):
+   if data['page'] >= data['total_pages']:
       moreData = False
    else:
-      uri = f"/events?page={int(data['page']) + 1}"
+      uri = f"/events?page={data['page'] + 1}"
 print(tabulate(eventInfo, headers=["Event Title", "# Registrants", "Status", ""]))
 print("-- Total events:", eventCnt)
