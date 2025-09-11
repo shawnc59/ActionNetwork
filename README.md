@@ -4,9 +4,13 @@ If there has already been an API key generated for this group, it will be displa
 
 ##### event-registrations.py
 
-Before running, use `pip install -r requirements.txt` to install required packages. Must set environment variable AN_API_TOKEN to the value of the API key for the target group.
+Before running, use `pip install -r requirements.txt` to install required packages. To pass the API token for the target group to the program, use one of the following methods:
+- Set environment variable AN_API_TOKEN to the value of the API token.
+- Use the `-t <value>` option when calling the program.
 
-`./event-registrations.py`
+Examples:
+- `./event-registrations.py -t <API token>` (macOS/Linux)
+- `python3 event-registrations.py -t <API token>` (Windows)
 
 ###### References
 
