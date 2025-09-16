@@ -6,14 +6,33 @@ from tabulate import tabulate
 import argparse
 
 def main():
-   parser = argparse.ArgumentParser(description ='Generate event registrant report')
+   parser = argparse.ArgumentParser(
+      description ='Generate event registrant report',
+      formatter_class=argparse.ArgumentDefaultsHelpFormatter
+   )
    parser.add_argument(
       '-t', "--token",
       dest = 'anApiToken', 
       action = 'store', 
       required = False,
       default = None,
-      help = 'Action Network API token'
+      help = 'Action Network API token (also can be set in the AN_API_TOKEN environment variable).'
+   )
+   parser.add_argument(
+      '-p', "--passed",
+      dest = 'showPassedEvents', 
+      action = 'store_true', 
+      required = False,
+      default = False,
+      help = 'Whether to show events whose end date has passed.'
+   )
+   parser.add_argument(
+      '-a', "--abbreviate",
+      dest = 'abbreviateTitle', 
+      action = 'store_true', 
+      required = False,
+      default = False,
+      help = 'Whether to abbreviate Title to 50 characters.'
    )
    args = parser.parse_args()
    if args.anApiToken:
@@ -52,11 +71,13 @@ def main():
             if 'end_date' in event and event['end_date']:
                eventEndDate = datetime.strptime(event['end_date'], '%Y-%m-%dT%H:%M:%SZ')
                if eventEndDate < datetime.now():
+                  if not args.showPassedEvents:
+                     continue
                   eventStatus = "Event end date has passed."
 
             hiddenAlert = "(Note: event is hidden)" if event['action_network:hidden'] else ""
             eventCnt += 1
-            title = event['title']
+            title = event['title'] if not args.abbreviateTitle else (event['title'][:50] + ("..." if len(event['title']) > 50 else ""))
             numRegistrants = event['total_accepted'] - 1 # Subtract 1 to exclude the host (automatically accepted)
    #         print(f"Event title: '{title}'; # of registrants: {numRegistrants}; {eventStatus} {hiddenAlert}")  
             eventInfo.append((title, numRegistrants, eventStatus, hiddenAlert))
