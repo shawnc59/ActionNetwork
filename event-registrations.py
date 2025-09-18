@@ -52,7 +52,8 @@ def main():
    uri = "/events"
    moreData = True
    eventCnt = 0
-   print(f"-- Event registrations as of {date.today()}")
+   passedEvents = 0
+   print(f"-- Event registrations as of {date.today()}\n")
    eventInfo = []
    while moreData:
       try:
@@ -72,6 +73,7 @@ def main():
                eventEndDate = datetime.strptime(event['end_date'], '%Y-%m-%dT%H:%M:%SZ')
                if eventEndDate < datetime.now():
                   if not args.showPassedEvents:
+                     passedEvents += 1
                      continue
                   eventStatus = "Event end date has passed."
 
@@ -86,8 +88,8 @@ def main():
          moreData = False
       else:
          uri = f"/events?page={data['page'] + 1}"
-   print(tabulate(eventInfo, headers=["Event Title", "# Registrants", "Status", ""]))
-   print("-- Total events:", eventCnt)
+   print(tabulate(eventInfo, headers=["Event Title", "# RSVPs", "Status", ""]))
+   print("\n-- Total events: " + str(eventCnt) + (f" ({passedEvents} other events have passed their end date)" if passedEvents > 0 else ""))
 
 if __name__ == "__main__":
    main()   
