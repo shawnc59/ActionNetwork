@@ -5,6 +5,8 @@ from datetime import datetime, date
 from tabulate import tabulate
 import argparse
 
+CAMPAIGN_URI = "https://actionnetwork.org/api/v2/event_campaigns/"
+
 def main():
    parser = argparse.ArgumentParser(
       description ='Generate event registrant report',
@@ -17,6 +19,14 @@ def main():
       required = False,
       default = None,
       help = 'Action Network API token (also can be set in the AN_API_TOKEN environment variable).'
+   )
+   parser.add_argument(
+      '-c', "--campaign",
+      dest = 'anCampaignId', 
+      action = 'store', 
+      required = False,
+      default = None,
+      help = 'Campaign ID for targeted events.'
    )
    parser.add_argument(
       '-p', "--passed",
@@ -42,6 +52,9 @@ def main():
       if not anApiToken:
          print("Please set the AN_API_TOKEN environment variable or pass it with the -t option.")
          exit(1)
+   anCampaignId = None         
+   if args.anCampaignId:
+      anCampaignId = args.anCampaignId
 
    headers = {
       "OSDI-API-Token": anApiToken
@@ -53,7 +66,7 @@ def main():
    moreData = True
    eventCnt = 0
    passedEvents = 0
-   print(f"-- Event registrations as of {date.today()}\n")
+   print(f'-- Event registrations as of {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n')
    eventInfo = []
    while moreData:
       try:
@@ -66,9 +79,18 @@ def main():
 
       for event in data['_embedded']['osdi:events']:
          if event['status'] != 'cancelled':
+            # First ensure this is part of the target event campaign.
+            if (anCampaignId and 
+               'action_network:event_campaign' in event['_links'] and
+               event['_links']['action_network:event_campaign']['href'] != f"{CAMPAIGN_URI}{anCampaignId}"
+            ):
+               continue
+            
             eventStartDate = datetime.strptime(event['start_date'], '%Y-%m-%dT%H:%M:%SZ')
             if eventStartDate > datetime.now():
-               eventStatus = "Event starts in {} day(s).".format((eventStartDate - datetime.now()).days)
+               daysUntilEvent = (eventStartDate.date() - date.today()).days
+               eventStatus = "Event starts in {} day(s).".format((eventStartDate.date() - date.today()).days)
+               # eventStatus = f"Event starts in {daysUntilEvent} day(s)." if daysUntilEvent > 0 else "Event starts today."
             if 'end_date' in event and event['end_date']:
                eventEndDate = datetime.strptime(event['end_date'], '%Y-%m-%dT%H:%M:%SZ')
                if eventEndDate < datetime.now():
