@@ -73,7 +73,7 @@ def main():
       if data['page'] >= data['total_pages']:
          moreData = False
       else:
-         uri = f"/events?page={data['page'] + 1}"
+         uri = f"/messages?page={data['page'] + 1}"
    print(tabulate(messageStats, headers=["Subject", "Date Sent", "# of Targets", "Total Opened", "Verified Opens", "Machine Opened", "Clicks", "Unsubscribed"]))
    print("\n-- Total sent messages: " + str(messageCnt))
 
