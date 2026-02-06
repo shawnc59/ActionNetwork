@@ -59,18 +59,19 @@ def main():
    headers = {
       "OSDI-API-Token": anApiToken
    }
-   baseUrl = "https://actionnetwork.org/api/v2"
+   API_BASE_URI = "https://actionnetwork.org/api/v2"
 
    # Loop through all the events and get the number of RSVPs
    uri = "/events"
    moreData = True
    eventCnt = 0
+   totalRegistrants = 0
    passedEvents = 0
    print(f'-- Event registrations as of {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n')
    eventInfo = []
    while moreData:
       try:
-         response = requests.get(f"{baseUrl}{uri}", headers=headers)
+         response = requests.get(f"{API_BASE_URI}{uri}", headers=headers)
          response.raise_for_status()
       except requests.exceptions.RequestException as e:
          print("Error calling Action Network API: {}".format(e))
@@ -103,6 +104,7 @@ def main():
             eventCnt += 1
             title = event['title'] if not args.abbreviateTitle else (event['title'][:50] + ("..." if len(event['title']) > 50 else ""))
             numRegistrants = event['total_accepted'] - 1 # Subtract 1 to exclude the host (automatically accepted)
+            totalRegistrants += numRegistrants
    #         print(f"Event title: '{title}'; # of registrants: {numRegistrants}; {eventStatus} {hiddenAlert}")  
             eventInfo.append((title, numRegistrants, eventStatus, hiddenAlert))
 
@@ -111,7 +113,7 @@ def main():
       else:
          uri = f"/events?page={data['page'] + 1}"
    print(tabulate(eventInfo, headers=["Event Title", "# RSVPs", "Status", ""]))
-   print("\n-- Total events: " + str(eventCnt) + (f" ({passedEvents} other events have passed their end date)" if passedEvents > 0 else ""))
+   print("\n-- Total events: " + str(eventCnt) + " with " + str(totalRegistrants) + " total registrants." + (f" ({passedEvents} other events have passed their end date)" if passedEvents > 0 else ""))
 
 if __name__ == "__main__":
    main()   
