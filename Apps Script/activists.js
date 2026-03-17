@@ -7,7 +7,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // Log the user, timestamp, and result to a 'Change Log' sheet.
-function logActivity({status, action = "Update Email Stats", runningAsTrigger = false}) {
+function logActivity({status, action = "Update Activist report", runningAsTrigger = false}) {
   const googleSheet = SpreadsheetApp.getActiveSpreadsheet();
   let logSheet = googleSheet.getSheetByName("Change Log");
   
@@ -50,7 +50,7 @@ function onOpen() {
   const ui = SpreadsheetApp.getUi();
   
   ui.createMenu('Action Network')
-    .addItem('Update Email Statistics', 'getActionNetworkStats')
+    .addItem('Update Activist Report', 'getActionNetworkStats')
     .addSeparator()
     .addItem('Config: Set/clear API Token', 'showTokenPrompt')
     .addToUi();
@@ -81,28 +81,8 @@ function showTokenPrompt() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 // Main function to get the Email stats from Action Network
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 function getActionNetworkStats(e) {
-  // Helper functions
-  function calcPct(dividend, divisor) {
-    if (divisor === 0) { return 0; } // Avoid division by zero
-    return dividend / divisor;
-  }
-
-  // Helper function to check if an object is empty (no enumerable properties).
-  function isEmptyObject(obj) {
-    // Check if obj is a non-null, non-array object
-    return (
-      obj !== null && // Exclude null
-      typeof obj === 'object' && // Ensure it's an object
-      !Array.isArray(obj) && // Exclude arrays
-      Object.keys(obj).length === 0 // Check for no enumerable properties
-    );
-  }
-
   // Determine if this code is running interactively or as a timer trigger
   const runningAsTrigger = e && (e.triggerSource || e.authMode) ? true : false;
 
@@ -116,15 +96,15 @@ function getActionNetworkStats(e) {
 
   // 2. Get the data from AN
   // Get the AN API token from the script properties.
+  const googleSheet = SpreadsheetApp.getActiveSpreadsheet();
   const anApiToken = PropertiesService.getScriptProperties().getProperty('AN_API_TOKEN');
+
   if (!anApiToken) {
     if (!runningAsTrigger) { SpreadsheetApp.getUi().alert("API Token missing."); }
     logActivity({status: "Error: API Token missing.", runningAsTrigger: runningAsTrigger});
     return;
   }
-  // Some housework
   // If a sheet named "Email Stats" doesn't exist then create it.
-  const googleSheet = SpreadsheetApp.getActiveSpreadsheet();
   const reportSheet = googleSheet.getSheetByName("Email Stats") || googleSheet.insertSheet("Email Stats");
   // AN API authorization is by the token passed as a header.
   const headers = { "OSDI-API-Token": anApiToken };
@@ -144,31 +124,22 @@ function getActionNetworkStats(e) {
       messages.forEach(message => {
         if (message.status === 'sent') {
           const stats = message.statistics || {};
-          if (isEmptyObject(stats)) {
-            logActivity({status: "Warning: No stats found for message '" + message.subject + "'", runningAsTrigger: runningAsTrigger});
-          } else {
-            let totalOpened = (stats.verified_opens || 0) + (stats.machine_opened || 0);
-            messageStats.push([
-              calcPct(totalOpened, message.total_targeted),
-              calcPct(stats.verified_opens || 0, message.total_targeted),
-              calcPct(stats.clicked || 0, message.total_targeted),
-              calcPct(stats.actions || 0, message.total_targeted),
-              message.subject,
-              message.from,
-              message.reply_to,
-              new Date(message.sent_start_date),
-              message.total_targeted || 0,
-              totalOpened,
-              stats.verified_opens || 0,
-              stats.machine_opened || 0,
-              stats.clicked || 0,
-              stats.actions || 0,
-              stats.unsubscribed || 0,
-              stats.bounced || 0,
-              stats.spam_reports || 0
-            ]);
-          }
-        } // if (message.status === 'sent')
+          messageStats.push([
+            message.subject,
+            message.from,
+            message.reply_to,
+            new Date(message.sent_start_date),
+            message.total_targeted || 0,
+            (stats.verified_opens || 0) + (stats.machine_opened || 0),
+            stats.verified_opens || 0,
+            stats.machine_opened || 0,
+            stats.clicked || 0,
+            stats.actions || 0,
+            stats.unsubscribed || 0,
+            stats.bounced || 0,
+            stats.spam_reports || 0
+          ]);
+        }
       });
       // If the current page is the same (or greater?) than total pages, then we're done. 
       // Else, increment the page index on the API endpoint for the next call.
@@ -182,27 +153,13 @@ function getActionNetworkStats(e) {
       messageStats.sort((a, b) => b[3] - a[3])
       // Clear the existing contents of the target sheet, add the header, and dump the stats array to it.
       reportSheet.clear();
-      reportSheet.setFrozenRows(1); // Freeze the header row
-      reportSheet.getRange('A:D').setNumberFormat('0%'); // Format the percentage columns
-      const headerRow = ["% Opened\n(Total)", "% Opened\n(Verified)", "% Clicked\nLink", "% Took\nAction","Subject", "From", "Reply To", "Sent Date", "Targets", "Total\nOpens", "Verified\nOpens", "Machine\nOpens", "Clicks", "Actions\nTaken", "Unsubscribed", "Bounced", "Spam\nReported"];
-      reportSheet.getRange(1, 1, 1, headerRow.length).setValues([headerRow]).setFontWeight("bold").setBackground("#EFEFEF").setHorizontalAlignment("center");
+      const headerRow = ["Subject", "From", "Reply To", "Sent Date", "Targets", "Total Opens", "Verified", "Machine", "Clicks", "Actions Taken", "Unsubscribes", "Bounced", "Spam Reported"];
+      reportSheet.getRange(1, 1, 1, headerRow.length).setValues([headerRow]).setFontWeight("bold").setBackground("#EFEFEF");
       reportSheet.getRange(2, 1, messageStats.length, messageStats[0].length).setValues(messageStats);
       // Add an information timestamp
       const timestamp = "Last Updated: " + Utilities.formatDate(new Date(), "GMT-5", "yyyy-MM-dd HH:mm:ss");
-      reportSheet.autoResizeColumns(1, 16);
       reportSheet.getRange("A" + (messageStats.length + 3)).setValue(timestamp).setFontStyle("italic");
-//      const range = reportSheet.getRange('A2:A');
-      // Set conditional formatting rule to highlight rows where % Opened (Total) is greater than 50%
-      const rule = SpreadsheetApp.newConditionalFormatRule()
-        .whenNumberGreaterThan(0.5)
-        .setBackground('lime')
-        .setRanges([reportSheet.getRange('A2:A')])
-        .build();
-      const rules = reportSheet.getConditionalFormatRules();
-      rules.push(rule);
-      reportSheet.setConditionalFormatRules(rules);
-      // Sort the sheet by Sent Date (column H) in descending order
-      reportSheet.sort(8, false);
+      reportSheet.autoResizeColumns(1, 13);
       
       // 4. Log Success
       logActivity({status: "Success: " + messageStats.length + " rows updated", runningAsTrigger: runningAsTrigger});

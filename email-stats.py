@@ -5,8 +5,6 @@ from datetime import datetime, date
 from tabulate import tabulate
 import argparse
 
-CAMPAIGN_URI = "https://actionnetwork.org/api/v2/event_campaigns/"
-
 def main():
    parser = argparse.ArgumentParser(
       description ='Generate Email statistics report',
