@@ -104,68 +104,91 @@ function getActionNetworkStats(e) {
     logActivity({status: "Error: API Token missing.", runningAsTrigger: runningAsTrigger});
     return;
   }
-  // If a sheet named "Email Stats" doesn't exist then create it.
-  const reportSheet = googleSheet.getSheetByName("Email Stats") || googleSheet.insertSheet("Email Stats");
+  // If a sheet named "Activists" doesn't exist then create it.
+  const reportSheet = googleSheet.getSheetByName("Activists") || googleSheet.insertSheet("Activists");
   // AN API authorization is by the token passed as a header.
   const headers = { "OSDI-API-Token": anApiToken };
   const API_BASE_URI = "https://actionnetwork.org/api/v2";
-  
-  let uri = "/messages";
+
+  // First we need to get all the tags for this group to avoid per-activist API calls later.
+  let uri = "/tags"
   let moreData = true;
-  let messageStats = [];
-  // Call the /messages API endpoint and keep looping until all have been returned.
-  try {
-    while (moreData) {
-      const url = `${API_BASE_URI}${uri}`;
-      const response = UrlFetchApp.fetch(url, { "headers": headers });
+  let tags = {};
+  
+  while (moreData) {
+    const url = `${API_BASE_URI}${uri}`;
+    const response = UrlFetchApp.fetch(url, { "headers": headers });
+    try {
       const data = JSON.parse(response.getContentText());
-      const messages = data['_embedded']['osdi:messages'];
-
-      messages.forEach(message => {
-        if (message.status === 'sent') {
-          const stats = message.statistics || {};
-          messageStats.push([
-            message.subject,
-            message.from,
-            message.reply_to,
-            new Date(message.sent_start_date),
-            message.total_targeted || 0,
-            (stats.verified_opens || 0) + (stats.machine_opened || 0),
-            stats.verified_opens || 0,
-            stats.machine_opened || 0,
-            stats.clicked || 0,
-            stats.actions || 0,
-            stats.unsubscribed || 0,
-            stats.bounced || 0,
-            stats.spam_reports || 0
-          ]);
-        }
-      });
-      // If the current page is the same (or greater?) than total pages, then we're done. 
-      // Else, increment the page index on the API endpoint for the next call.
-      if (data.page >= data.total_pages) { moreData = false; } 
-      else { uri = `/messages?page=${data.page + 1}`; }
+    } catch (e) {
+      logActivity({status: "Error: " + e.toString(), runningAsTrigger: runningAsTrigger});
+      if (!runningAsTrigger) { SpreadsheetApp.getUi().alert("An error occurred. Check the Change Log."); }
     }
-
-    // 3. Write Data to Sheet
-    if (messageStats.length > 0) {
-      // Sort stats records by Sent Date (4th element in the inner array) descending
-      messageStats.sort((a, b) => b[3] - a[3])
-      // Clear the existing contents of the target sheet, add the header, and dump the stats array to it.
-      reportSheet.clear();
-      const headerRow = ["Subject", "From", "Reply To", "Sent Date", "Targets", "Total Opens", "Verified", "Machine", "Clicks", "Actions Taken", "Unsubscribes", "Bounced", "Spam Reported"];
-      reportSheet.getRange(1, 1, 1, headerRow.length).setValues([headerRow]).setFontWeight("bold").setBackground("#EFEFEF");
-      reportSheet.getRange(2, 1, messageStats.length, messageStats[0].length).setValues(messageStats);
-      // Add an information timestamp
-      const timestamp = "Last Updated: " + Utilities.formatDate(new Date(), "GMT-5", "yyyy-MM-dd HH:mm:ss");
-      reportSheet.getRange("A" + (messageStats.length + 3)).setValue(timestamp).setFontStyle("italic");
-      reportSheet.autoResizeColumns(1, 13);
-      
-      // 4. Log Success
-      logActivity({status: "Success: " + messageStats.length + " rows updated", runningAsTrigger: runningAsTrigger});
+    if (data.['_embedded'] && data.['_embedded']['osdi:tags']) {
+      for (const tag of data.['_embedded']['osdi:tags']) {
+        // tagID = tag["identifiers"][0].replace("action_network:", "");
+        // tagName = tag["name"];
+        tags[tag["identifiers"][0].replace("action_network:", "")] = tag["name"];
+      }
     }
-  } catch (e) {
-    logActivity({status: "Error: " + e.toString(), runningAsTrigger: runningAsTrigger});
-    if (!runningAsTrigger) { SpreadsheetApp.getUi().alert("An error occurred. Check the Change Log."); }
+  }
+
+  // Call the /people API endpoint and keep looping until all have been returned.
+  uri = "/people";
+  moreData = true;
+  let activists = [];
+  while (moreData) {
+    const url = `${API_BASE_URI}${uri}`;
+  try {
+      const response = UrlFetchApp.fetch(url, { "headers": headers });
+    } catch (e) {
+      logActivity({status: "Error: " + e.toString(), runningAsTrigger: runningAsTrigger});
+      if (!runningAsTrigger) { SpreadsheetApp.getUi().alert("An error occurred. Check the Change Log."); }
+    }
+    const data = JSON.parse(response.getContentText());
+    const messages = data['_embedded']['osdi:messages'];
+
+    messages.forEach(message => {
+      if (message.status === 'sent') {
+        const stats = message.statistics || {};
+        activists.push([
+          message.subject,
+          message.from,
+          message.reply_to,
+          new Date(message.sent_start_date),
+          message.total_targeted || 0,
+          (stats.verified_opens || 0) + (stats.machine_opened || 0),
+          stats.verified_opens || 0,
+          stats.machine_opened || 0,
+          stats.clicked || 0,
+          stats.actions || 0,
+          stats.unsubscribed || 0,
+          stats.bounced || 0,
+          stats.spam_reports || 0
+        ]);
+      }
+    });
+    // If the current page is the same (or greater?) than total pages, then we're done. 
+    // Else, increment the page index on the API endpoint for the next call.
+    if (data.page >= data.total_pages) { moreData = false; } 
+    else { uri = `/messages?page=${data.page + 1}`; }
+  }
+
+  // 3. Write Data to Sheet
+  if (activists.length > 0) {
+    // Sort stats records by Sent Date (4th element in the inner array) descending
+    activists.sort((a, b) => b[3] - a[3])
+    // Clear the existing contents of the target sheet, add the header, and dump the stats array to it.
+    reportSheet.clear();
+    const headerRow = ["Subject", "From", "Reply To", "Sent Date", "Targets", "Total Opens", "Verified", "Machine", "Clicks", "Actions Taken", "Unsubscribes", "Bounced", "Spam Reported"];
+    reportSheet.getRange(1, 1, 1, headerRow.length).setValues([headerRow]).setFontWeight("bold").setBackground("#EFEFEF");
+    reportSheet.getRange(2, 1, activists.length, activists[0].length).setValues(activists);
+    // Add an information timestamp
+    const timestamp = "Last Updated: " + Utilities.formatDate(new Date(), "GMT-5", "yyyy-MM-dd HH:mm:ss");
+    reportSheet.getRange("A" + (activists.length + 3)).setValue(timestamp).setFontStyle("italic");
+    reportSheet.autoResizeColumns(1, 13);
+    
+    // 4. Log Success
+    logActivity({status: "Success: " + activists.length + " rows updated", runningAsTrigger: runningAsTrigger});
   }
 }
