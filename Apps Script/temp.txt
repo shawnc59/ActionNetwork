@@ -1,0 +1,6 @@
+=QUERY(FLATTEN(MAP(.              A2:A, LAMBDA(row, IF(row="",, INDEX(TRIM(SPLIT(row, ","))))))), "select Col1, count(Col1) where Col1 starts with 'WI-ARM' group by Col1 label count(Col1) 'Count'")
+=QUERY(FLATTEN(MAP('AN activists'!I2:I, LAMBDA(row, IF(row="",, SPLIT(row, ", ", TRUE))))), "select Col1, count(Col1) where Col1 starts with 'WI-ARM' group by Col1 label count(Col1) 'Count'")
+
+=FILTER(QUERY(IMPORTRANGE("https://docs.google.com/spreadsheets/d/17ws7O6K_-Tqtlu5rdB1HFSjM01CDIsL7S39gixe5iZE","Anonymized"), 
+"SELECT Col1, Col2, Col3, Col4, Col8, Col9, Col20, Col21, Col22, Col23", 1)
+,INDEX(QUERY(IMPORTRANGE("https://docs.google.com/spreadsheets/d/17ws7O6K_-Tqtlu5rdB1HFSjM01CDIsL7S39gixe5iZE","Anonymized"), "SELECT Col10", 1),0,1) = "subscribed")

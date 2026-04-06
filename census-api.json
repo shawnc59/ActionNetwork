@@ -1,0 +1,269 @@
+{
+    "result": {
+        "geographies": {
+            "States": [
+                {
+                    "STATENS": "01779806",
+                    "GEOID": "55",
+                    "CENTLAT": "+44.6273136",
+                    "AREAWATER": "29340517133",
+                    "STATE": "55",
+                    "BASENAME": "Wisconsin",
+                    "STUSAB": "WI",
+                    "OID": "2749096104710",
+                    "LSADC": "00",
+                    "FUNCSTAT": "A",
+                    "INTPTLAT": "+44.6309071",
+                    "DIVISION": "3",
+                    "NAME": "Wisconsin",
+                    "REGION": "2",
+                    "OBJECTID": 30,
+                    "CENTLON": "-089.7097854",
+                    "AREALAND": "140295174419",
+                    "INTPTLON": "-089.7093916",
+                    "MTFCC": "G4000"
+                }
+            ],
+            "Combined Statistical Areas": [
+                {
+                    "POP100": "",
+                    "GEOID": "357",
+                    "CENTLAT": "+43.0794246",
+                    "AREAWATER": "266355765",
+                    "BASENAME": "Madison-Janesville-Beloit, WI",
+                    "OID": "2619034687908070",
+                    "LSADC": "M0",
+                    "FUNCSTAT": "S",
+                    "INTPTLAT": "+43.0817016",
+                    "NAME": "Madison-Janesville-Beloit, WI CSA",
+                    "OBJECTID": 123,
+                    "CSA": "357",
+                    "CENTLON": "-089.5768277",
+                    "INTPTLON": "-089.5865619",
+                    "AREALAND": "12583701995",
+                    "HU100": "",
+                    "MTFCC": "G3100"
+                }
+            ],
+            "County Subdivisions": [
+                {
+                    "COUSUB": "48000",
+                    "GEOID": "5502548000",
+                    "CENTLAT": "+43.0813644",
+                    "AREAWATER": "55508444",
+                    "STATE": "55",
+                    "BASENAME": "Madison",
+                    "OID": "27690689263761",
+                    "LSADC": "25",
+                    "FUNCSTAT": "F",
+                    "INTPTLAT": "+43.0878147",
+                    "NAME": "Madison city",
+                    "OBJECTID": 11890,
+                    "CENTLON": "-089.3905916",
+                    "COUSUBCC": "C5",
+                    "AREALAND": "218116040",
+                    "INTPTLON": "-089.4298563",
+                    "MTFCC": "G4040",
+                    "COUSUBNS": "01583625",
+                    "COUNTY": "025"
+                }
+            ],
+            "Urban Areas": [
+                {
+                    "GEOID": "53200",
+                    "CENTLAT": "+43.0945181",
+                    "AREAWATER": "3305851",
+                    "BASENAME": "Madison, WI",
+                    "OID": "27021689279996",
+                    "UA": "53200",
+                    "LSADC": "67",
+                    "FUNCSTAT": "S",
+                    "INTPTLAT": "+43.0419689",
+                    "NAME": "Madison, WI Urban Area",
+                    "OBJECTID": 1415,
+                    "CENTLON": "-089.3919468",
+                    "AREALAND": "387728983",
+                    "INTPTLON": "-089.4922081",
+                    "MTFCC": "G3500"
+                }
+            ],
+            "Incorporated Places": [
+                {
+                    "DISP_CLR": 3,
+                    "NECTAPCI": "N",
+                    "GEOID": "5548000",
+                    "CENTLAT": "+43.0813644",
+                    "AREAWATER": "55508444",
+                    "BASENAME": "Madison",
+                    "STATE": "55",
+                    "OID": "27890689268972",
+                    "LSADC": "25",
+                    "PLACE": "48000",
+                    "FUNCSTAT": "A",
+                    "INTPTLAT": "+43.0878147",
+                    "NAME": "Madison city",
+                    "OBJECTID": 31889,
+                    "PLACECC": "C5",
+                    "CENTLON": "-089.3905916",
+                    "CBSAPCI": "Y",
+                    "AREALAND": "218116040",
+                    "INTPTLON": "-089.4298563",
+                    "PLACENS": "01583625",
+                    "MTFCC": "G4110"
+                }
+            ],
+            "Counties": [
+                {
+                    "GEOID": "55025",
+                    "CENTLAT": "+43.0672853",
+                    "AREAWATER": "106205818",
+                    "STATE": "55",
+                    "BASENAME": "Dane",
+                    "OID": "27590689263643",
+                    "LSADC": "06",
+                    "FUNCSTAT": "A",
+                    "INTPTLAT": "+43.0674684",
+                    "NAME": "Dane County",
+                    "OBJECTID": 2993,
+                    "CENTLON": "-089.4181331",
+                    "COUNTYCC": "H1",
+                    "COUNTYNS": "01581072",
+                    "AREALAND": "3098910440",
+                    "INTPTLON": "-089.4178523",
+                    "MTFCC": "G4020",
+                    "COUNTY": "025"
+                }
+            ],
+            "2024 State Legislative Districts - Upper": [
+                {
+                    "GEOID": "55027",
+                    "CENTLAT": "+43.1442901",
+                    "AREAWATER": "24204603",
+                    "STATE": "55",
+                    "BASENAME": "27",
+                    "OID": "2129035957765807",
+                    "SLDU": "027",
+                    "LSADC": "LU",
+                    "FUNCSTAT": "N",
+                    "INTPTLAT": "+43.1366804",
+                    "NAME": "State Senate District 27",
+                    "OBJECTID": 77,
+                    "CENTLON": "-089.5978983",
+                    "LSY": "2024",
+                    "AREALAND": "875918596",
+                    "INTPTLON": "-089.5904366",
+                    "MTFCC": "G5210",
+                    "LDTYP": "O"
+                }
+            ],
+            "2024 State Legislative Districts - Lower": [
+                {
+                    "GEOID": "55079",
+                    "CENTLAT": "+43.0560963",
+                    "SLDL": "079",
+                    "AREAWATER": "150376",
+                    "STATE": "55",
+                    "BASENAME": "79",
+                    "OID": "2139035957765824",
+                    "LSADC": "L3",
+                    "FUNCSTAT": "N",
+                    "INTPTLAT": "+43.0578775",
+                    "NAME": "Assembly District 79",
+                    "OBJECTID": 1135,
+                    "CENTLON": "-089.4821773",
+                    "LSY": "2024",
+                    "AREALAND": "37957931",
+                    "INTPTLON": "-089.4854477",
+                    "MTFCC": "G5220",
+                    "LDTYP": "O"
+                }
+            ],
+            "2020 Census Blocks": [
+                {
+                    "SUFFIX": "",
+                    "GEOID": "550250006003001",
+                    "CENTLAT": "+43.0355067",
+                    "BLOCK": "3001",
+                    "AREAWATER": "0",
+                    "STATE": "55",
+                    "BASENAME": "3001",
+                    "OID": "210701005917233",
+                    "LSADC": "BK",
+                    "FUNCSTAT": "S",
+                    "INTPTLAT": "+43.0355067",
+                    "NAME": "Block 3001",
+                    "OBJECTID": 3865898,
+                    "TRACT": "000600",
+                    "CENTLON": "-089.4524312",
+                    "BLKGRP": "3",
+                    "AREALAND": "25363",
+                    "INTPTLON": "-089.4524312",
+                    "MTFCC": "G5040",
+                    "LWBLKTYP": "L",
+                    "UR": "U",
+                    "COUNTY": "025"
+                }
+            ],
+            "Census Tracts": [
+                {
+                    "GEOID": "55025000600",
+                    "CENTLAT": "+43.0256883",
+                    "AREAWATER": "124317",
+                    "STATE": "55",
+                    "BASENAME": "6",
+                    "OID": "20790689279666",
+                    "LSADC": "CT",
+                    "FUNCSTAT": "S",
+                    "INTPTLAT": "+43.0273239",
+                    "NAME": "Census Tract 6",
+                    "OBJECTID": 72271,
+                    "TRACT": "000600",
+                    "CENTLON": "-089.4578507",
+                    "AREALAND": "3147405",
+                    "INTPTLON": "-089.4573862",
+                    "MTFCC": "G5020",
+                    "COUNTY": "025"
+                }
+            ],
+            "119th Congressional Districts": [
+                {
+                    "GEOID": "5502",
+                    "CENTLAT": "+42.9668811",
+                    "CDSESSN": "119",
+                    "AREAWATER": "174474690",
+                    "BASENAME": "2",
+                    "STATE": "55",
+                    "OID": "2119035957765958",
+                    "LSADC": "C2",
+                    "FUNCSTAT": "N",
+                    "INTPTLAT": "+42.9614077",
+                    "NAME": "Congressional District 2",
+                    "OBJECTID": 345,
+                    "CENTLON": "-089.7377186",
+                    "CD119": "02",
+                    "AREALAND": "11139294757",
+                    "INTPTLON": "-089.7339555",
+                    "MTFCC": "G5200"
+                }
+            ]
+        },
+        "input": {
+            "vintage": {
+                "isDefault": true,
+                "id": "4",
+                "vintageName": "Current_Current",
+                "vintageDescription": "Current Vintage - Current Benchmark"
+            },
+            "location": {
+                "x": -89.4526,
+                "y": 43.0356
+            },
+            "benchmark": {
+                "isDefault": true,
+                "benchmarkDescription": "Public Address Ranges - Current Benchmark",
+                "id": "4",
+                "benchmarkName": "Public_AR_Current"
+            }
+        }
+    }
+}
