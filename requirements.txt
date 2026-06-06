@@ -2,3 +2,4 @@
 tabulate
 argparse
 requests
+logging

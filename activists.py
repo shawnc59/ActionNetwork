@@ -58,11 +58,11 @@ def main():
       "State",
       "State (abbreviated)", 
       "Zip Code", 
-      "County", 
       "Longitude/Latitude", 
-      "Congressional District", 
-      "State Lower District", 
-      "State Upper District",
+      "County (census)", 
+      "Congressional District (census)", 
+      "State Lower District (census)", 
+      "State Upper District (census)",
       "Tags"
    ]
 
@@ -153,7 +153,7 @@ def main():
                         if hrefTokens[6] in tags:
                            activistTags.append(tags[hrefTokens[6]])
             # If we have coordinates, use the Census geocoding API to get more activist info.
-            county = congressDist = stateLowerDist = stateUpperDist = state =''
+            county = congressDist = stateLowerDist = stateUpperDist = state = ''
             if longitude and latitude:
                locKey = f"{longitude}/{latitude}"
                if locKey in locations:
@@ -212,11 +212,11 @@ def main():
                "State": state,
                "State (abbreviated)": stateAbbr,
                "Zip Code": zipCode,
-               "County": f"{county} - {state}",
                "Longitude/Latitude": locKey,
-               "Congressional District": congressDist,
-               "State Lower District": stateLowerDist,
-               "State Upper District": stateUpperDist,
+               "County (census)": county,
+               "Congressional District (census)": congressDist,
+               "State Lower District (census)": stateLowerDist,
+               "State Upper District (census)": stateUpperDist,
                "Tags": ';'.join(activistTags)
             })
          if personCnt % 25 == 0:
