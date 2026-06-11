@@ -34,7 +34,7 @@ function checkUserAccess() {
   
   // List of authorized email addresses (comma-separated)
   const authorizedUsers = [
-    "shawn.chapla@gmail.com"
+    "<Google account Email>"
   ];
 
   if (authorizedUsers.indexOf(currentUser) === -1) {
