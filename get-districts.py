@@ -87,7 +87,7 @@ def main():
    # Loop through all the people entries and find those which are subscribed.
    uri = "/people"
    moreData = True
-   subscribedCnt = skippedCnt = districtAddedCnt = locHitCnt = 0
+   subscribedCnt = addrExistsSkippedCnt = badLocSkippedCnt = districtAddedCnt = districtUpdatedCnt = locHitCnt = 0
    activists = []
    locations: dict[str, dict] = {} # Values from identical coordinate pairs.
    while moreData:
@@ -116,24 +116,24 @@ def main():
                # If the activist has a street address, then AN will provide the state districts.
                if 'address_lines' in postalAddress and len(postalAddress['address_lines']) > 0:
                   logger.debug(f"Skipping activist with email {email} due to presence of street address.")
-                  skippedCnt += 1
+                  addrExistsSkippedCnt += 1
                   continue
 
                # Check if this activist already has the district info in their record.
-               updateNeeded = False
+               districtsMissing = False
                currentStateLowerDist = currentStateUpperDist = ''
                if 'custom_fields' in person:
                   currentStateLowerDist = person['custom_fields']['TA-State-District-Lower'] if 'TA-State-District-Lower' in person['custom_fields'] else ''
                   currentStateUpperDist = person['custom_fields']['TA-State-District-Upper'] if 'TA-State-District-Upper' in person['custom_fields'] else ''
                   if currentStateLowerDist == '' or currentStateUpperDist == '':
-                     updateNeeded = True
+                     districtsMissing = True
 
                if 'location' in postalAddress:
                   longitude = postalAddress['location']['longitude'] if 'longitude' in postalAddress['location'] else 0
                   latitude = postalAddress['location']['latitude'] if 'latitude' in postalAddress['location'] else 0
             # Make sure we don't have "blank" values.
             if longitude == 0 or longitude == 0.0 or latitude == 0 or latitude == 0.0:
-               skippedCnt += 1
+               badLocSkippedCnt += 1
                # See if the activist is missing a Zip Code.
                if 'postal_code' not in postalAddress or postalAddress['postal_code'] == '':
                   logger.warning(f"Skipping activist with email {email} due to blank/missing longitude/latitude values and missing postal code.")
@@ -180,23 +180,26 @@ def main():
                   }
 
             # Now that we have the district info, check whether this user already has these values so we don't unnecessarily update it. 
-            if updateNeeded or currentStateLowerDist != stateLowerDistrict or currentStateUpperDist != stateUpperDistrict:                 
+            if districtsMissing or currentStateLowerDist != stateLowerDistrict or currentStateUpperDist != stateUpperDistrict:                 
                activists.append({
                   "Email": email,
                   "TA-State-District-Lower": stateLowerDistrict,
                   "TA-State-District-Upper": stateUpperDistrict
                })
-               districtAddedCnt += 1
+               if districtsMissing:
+                   districtAddedCnt += 1
+               else:
+                   districtUpdatedCnt += 1
 
       if 'next' not in data['_links'] or 'href' not in data['_links']['next']:
          moreData = False
       else:
          uri = data['_links']['next']['href'].removeprefix(AN_API_BASE_URI) # API_BASE_URI is prepended in the API call.
-   with open("activists.csv", mode='w', newline='') as csvFile:
+   with open("districts.csv", mode='w', newline='') as csvFile:
       writer = csv.DictWriter(csvFile, fieldnames=FIELDS)
       writer.writeheader()  # Write header row
       writer.writerows(activists)  # Write data rows
-   logger.info(f"Total subscribed activists: {subscribedCnt}; custom fields added: {districtAddedCnt} (Location hits: {locHitCnt}); those w/ address skipped: {skippedCnt}")
+   logger.info(f"Total subscribed activists: {subscribedCnt}; custom fields added: {districtAddedCnt}, updated: {districtUpdatedCnt} (repeated coordinates: {locHitCnt}); w/ address skipped: {addrExistsSkippedCnt} (no location data: {badLocSkippedCnt})")
 
 if __name__ == "__main__":
    main()   
