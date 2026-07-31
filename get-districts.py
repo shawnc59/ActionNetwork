@@ -199,7 +199,7 @@ def main():
       writer = csv.DictWriter(csvFile, fieldnames=FIELDS)
       writer.writeheader()  # Write header row
       writer.writerows(activists)  # Write data rows
-   logger.info(f"Total subscribed activists: {subscribedCnt}; custom fields added: {districtAddedCnt}, updated: {districtUpdatedCnt} (repeated coordinates: {locHitCnt}); w/ address skipped: {addrExistsSkippedCnt} (no location data: {badLocSkippedCnt})")
+   logger.info(f"Activist counts - total subscribed: {subscribedCnt}; custom fields to add: {districtAddedCnt}, custom fields to update: {districtUpdatedCnt} (reused coordinates: {locHitCnt} times); w/ address (skipped): {addrExistsSkippedCnt} (no location data: {badLocSkippedCnt})")
 
 if __name__ == "__main__":
    main()   
