@@ -9,7 +9,7 @@
          "type": "debugpy",
          "request": "launch",
          "program": "get-districts.py",
-         "args": [],
+         "args": ["-u"],
          "console": "integratedTerminal"
       }
    ]
