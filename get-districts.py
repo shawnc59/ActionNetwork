@@ -7,6 +7,36 @@ import argparse
 import csv
 import logging
 
+# def getDistrictFields(person: dict) -> tuple[str, str]:
+#    currentStateDistrictLower = currentStateDistrictUpper = ''
+#    if 'custom_fields' in person:
+#       currentStateDistrictLower = person['custom_fields']['TA-State-District-Lower'] \
+#          if 'TA-State-District-Lower' in person['custom_fields'] else ''
+#       currentStateDistrictUpper = person['custom_fields']['TA-State-District-Upper'] \
+#          if 'TA-State-District-Upper' in person['custom_fields'] else ''
+#    return currentStateDistrictLower, currentStateDistrictUpper
+
+def updateDistrictFields(
+         selfURL: str, 
+         stateDistrictLower: str, 
+         stateDistrictUpper: str, 
+         anHeaders: dict
+      ) -> bool:
+   logger: logging.Logger = logging.getLogger(__name__)
+   updatePayload = {
+      "custom_fields": {
+         "TA-State-District-Lower": stateDistrictLower,
+         "TA-State-District-Upper": stateDistrictUpper
+      }
+   }
+   try:
+      response = requests.put(selfURL, headers=anHeaders, json=updatePayload)
+      response.raise_for_status()
+   except requests.exceptions.RequestException as e:
+      logger.error(f"Error updating Action Network record: {e}")
+      return False
+   return True
+
 def main():
    logger: logging.Logger = logging.getLogger(__name__)
    logging.basicConfig(
@@ -67,11 +97,12 @@ def main():
          exit(1)
    applyUpdates: bool = args.applyUpdates
    testRun: bool = args.testRun
+   testLogPrefix: str = "(TEST) " if testRun else ""
 
+   AN_API_BASE_URI = "https://actionnetwork.org/api/v2"
    AN_REQUIRED_HDRS = {
       "OSDI-API-Token": anApiToken
    }
-   AN_API_BASE_URI = "https://actionnetwork.org/api/v2"
    CENSUS_API_URL = "https://geocoding.geo.census.gov/geocoder/geographies/coordinates"
    FIELDS = [
       "Email", 
@@ -80,31 +111,10 @@ def main():
    ]
    BLANK_GPS_VALUES = [None, 0, 0.0]
 
-   # First, get all the tags for this group to avoid per-activist API calls later.
-   uri: str = "/tags"
-   moreData: bool = True
-   tags: dict[str, str] = {} # Tag ID and name pairs.
-   while moreData:
-      try:
-         response = requests.get(f"{AN_API_BASE_URI}/{uri}", headers=AN_REQUIRED_HDRS)
-         response.raise_for_status()
-      except requests.exceptions.RequestException as e:
-         logger.error("Error calling Action Network API endpoint '/tags': {}".format(e))
-         exit(1)
-      data = response.json()
-      if "osdi:tags" in data['_embedded']:
-         for tag in data['_embedded']['osdi:tags']:
-            tags[tag['identifiers'][0].removeprefix("action_network:")] = tag['name']
-
-      if data['page'] >= data['total_pages']:
-         moreData = False
-      else:
-         uri = f"/tags?page={data['page'] + 1}"
- 
    # Loop through all the people entries and find those which are subscribed.
-   uri = "/people"
-   moreData = True
-   subscribedCnt = addrExistsSkippedCnt = badLocSkippedCnt = districtsAddedCnt = districtsUpdatedCnt = locHitCnt = 0
+   uri: str = "/people"
+   moreData: bool = True
+   subscribedCnt = addrExistsSkippedCnt = badLocSkippedCnt = districtsAddedCnt = districtsUpdatedCnt = districtsRemovedCnt = locHitCnt = 0
    activists = []
    locations: dict[str, dict] = {} # Values from identical coordinate pairs.
    while moreData:
@@ -117,13 +127,6 @@ def main():
       data = response.json()
 
       for person in data['_embedded']['osdi:people']:
-         # Get the "self" URL to this PEOPLE record so we can update it later if needed.
-         selfURL: str = ''
-         if '_links' in person and 'self' in person['_links'] and 'href' in person['_links']['self']:
-            selfURL = person['_links']['self']['href']
-         else:
-            logger.warning(f"Skipping '{email}' - no self URL found for this record in case of update.")
-            continue
          # Skip any people who don't have email addresses or aren't subscribed
          if "email_addresses" in person and len(person['email_addresses']) > 0 and person['email_addresses'][0]['status'] == 'subscribed':
             subscribedCnt += 1
@@ -131,32 +134,52 @@ def main():
                logger.info(f"Processed {subscribedCnt} subscribed activists so far ...")
 
             email = person['email_addresses'][0]['address']
+            # Get the "self" URL to this PEOPLE record so we can update it later if needed.
+            selfURL: str = ''
+            if '_links' in person and 'self' in person['_links'] and 'href' in person['_links']['self']:
+               selfURL = person['_links']['self']['href']
+            else:
+               logger.warning(f"Skipping '{email}' - no self URL found for this record in case of update.")
+               continue
             # Now get any postal addresses if they exist
             longitude = latitude = 0
-            locKey = state = derivedStateDistrictLower = derivedStateDistrictUpper = ''
+            locKey = state = derivedStateDistrictLower = derivedStateDistrictUpper = \
+               currentStateDistrictLower = currentStateDistrictUpper = ''
+
+            # Check if this activist already has the custom fields in their record.
+            districtsMissing = False
+            # currentStateDistrictLower, currentStateDistrictUpper = getDistrictFields(person)
+            if 'custom_fields' in person:
+               currentStateDistrictLower = person['custom_fields']['TA-State-District-Lower'] \
+                  if 'TA-State-District-Lower' in person['custom_fields'] else ''
+               currentStateDistrictUpper = person['custom_fields']['TA-State-District-Upper'] \
+                  if 'TA-State-District-Upper' in person['custom_fields'] else ''
+            if currentStateDistrictLower == '' or currentStateDistrictUpper == '':
+               districtsMissing = True
 
             if "postal_addresses" in person and len(person['postal_addresses']) > 0:
                postalAddress = person['postal_addresses'][0]
                # If the activist has a street address, then AN will provide the state districts.
+               # If they also have the custom fields defined (address perhaps added later), then we
+               # should clear the custom fields and let AN provide them.
                if 'address_lines' in postalAddress and len(postalAddress['address_lines']) > 0:
+                  if not districtsMissing:
+                     # Activst has a street address AND the custom fields.  We need to remove the latter.
+                     if applyUpdates:
+                        if not testRun:
+                           if not updateDistrictFields(selfURL, '', '', AN_REQUIRED_HDRS): 
+                              logger.error(f"Error clearing custom fields for {email}.")
+                              continue
+                        logger.info(f"{testLogPrefix}Removed custom fields from activist with email {email}; address present.")
+                        districtsRemovedCnt += 1
                   logger.debug(f"Skipping activist with email {email} due to presence of street address.")
                   addrExistsSkippedCnt += 1
                   continue
 
-               # Check if this activist already has the district info in their record.
-               districtsMissing = False
-               currentStateDistrictLower = currentStateDistrictUpper = ''
-               if 'custom_fields' in person:
-                  currentStateDistrictLower = person['custom_fields']['TA-State-District-Lower'] \
-                     if 'TA-State-District-Lower' in person['custom_fields'] else ''
-                  currentStateDistrictUpper = person['custom_fields']['TA-State-District-Upper'] \
-                     if 'TA-State-District-Upper' in person['custom_fields'] else ''
-                  if currentStateDistrictLower == '' or currentStateDistrictUpper == '':
-                     districtsMissing = True
-
                if 'location' in postalAddress:
                   longitude = postalAddress['location']['longitude'] if 'longitude' in postalAddress['location'] else 0
                   latitude = postalAddress['location']['latitude'] if 'latitude' in postalAddress['location'] else 0
+
             # Make sure we don't have "blank" values.
             if longitude in BLANK_GPS_VALUES or latitude in BLANK_GPS_VALUES:
                badLocSkippedCnt += 1
@@ -217,22 +240,17 @@ def main():
                    districtsUpdatedCnt += 1
 
                # Update the Action Network record if the user specified the --update option.
-               action: str = "Would have updated" if testRun else "Updated"
                if applyUpdates:
                   if not testRun:
-                     updatePayload = {
-                        "custom_fields": {
-                           "TA-State-District-Lower": derivedStateDistrictLower,
-                           "TA-State-District-Upper": derivedStateDistrictUpper
-                        }
-                     }
-                     try:
-                        response = requests.put(selfURL, headers=AN_REQUIRED_HDRS, json=updatePayload)
-                        response.raise_for_status()
-                     except requests.exceptions.RequestException as e:
-                        logger.error(f"Error updating Action Network record for {email}: {e}")
+                     if not updateDistrictFields(
+                              selfURL, 
+                              derivedStateDistrictLower, 
+                              derivedStateDistrictUpper, 
+                              AN_REQUIRED_HDRS
+                           ): 
+                        logger.error(f"Error adding custom fields for {email}.")
                         continue
-                  logger.info(f"{action} '{email}' - Lower: '{derivedStateDistrictLower}' (old: '{currentStateDistrictLower}'), Upper: '{derivedStateDistrictUpper}' (old: '{currentStateDistrictUpper}')")
+                  logger.info(f"{testLogPrefix}Updated '{email}' - Lower: '{derivedStateDistrictLower}' (old: '{currentStateDistrictLower}'), Upper: '{derivedStateDistrictUpper}' (old: '{currentStateDistrictUpper}')")
                else:
                   # If we're not doing direct updates to Action Network, then just add this activist to the CSV file.
                   activists.append({
@@ -251,7 +269,7 @@ def main():
          writer = csv.DictWriter(csvFile, fieldnames=FIELDS)
          writer.writeheader()  # Write header row
          writer.writerows(activists)  # Write data rows
-   logger.info(f"Activist counts - total subscribed: {subscribedCnt}; custom fields to add: {districtsAddedCnt}, custom fields to update: {districtsUpdatedCnt} (reused coordinates: {locHitCnt} times); w/ address (skipped): {addrExistsSkippedCnt} (no location data: {badLocSkippedCnt})")
+   logger.info(f"Activist counts - total subscribed: {subscribedCnt}; custom fields to add: {districtsAddedCnt}, custom fields to update: {districtsUpdatedCnt} (reused coordinates: {locHitCnt} times); w/ address skipped: {addrExistsSkippedCnt} (districts removed: {districtsRemovedCnt}); (no location data: {badLocSkippedCnt})")
 
 if __name__ == "__main__":
    main()   
