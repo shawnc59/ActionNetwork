@@ -154,7 +154,8 @@ def main():
                   if 'TA-State-District-Lower' in person['custom_fields'] else ''
                currentStateDistrictUpper = person['custom_fields']['TA-State-District-Upper'] \
                   if 'TA-State-District-Upper' in person['custom_fields'] else ''
-            if currentStateDistrictLower == '' or currentStateDistrictUpper == '':
+            # Both custom fields would need to be missing as some states may not have two chambers.
+            if currentStateDistrictLower == '' and currentStateDistrictUpper == '':
                districtsMissing = True
 
             if "postal_addresses" in person and len(person['postal_addresses']) > 0:
