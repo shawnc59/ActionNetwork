@@ -14,4 +14,6 @@ Examples:
 
 ###### References
 
-<a href="https://actionnetwork.org/docs/">Action Network API and Webhooks -- Getting Started</a>
+- <a href="https://actionnetwork.org/docs/">Action Network API and Webhooks -- Getting Started</a>
+- <a href="https://geocoding.geo.census.gov/geocoder/">Census Geocoder</a>
+   - <a href="https://geocoding.geo.census.gov/geocoder/Geocoding_Services_API.html">API reference</a>
